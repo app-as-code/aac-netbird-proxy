@@ -1,0 +1,79 @@
+service:
+  name: aac-netbird-proxy
+  friendly_name: NetBird Proxy
+  image_repo: netbirdio/reverse-proxy
+  image_tag: 0.74.2
+  description: NetBird reverse proxy for self-hosted routing endpoints
+  icon: https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/netbird.png
+  category: Netzwerk & Sicherheit
+  stage: prod
+  hostname: netbird-proxy
+ports:
+- name: http
+  port: 80
+  external_port: 80
+  protocol: TCP
+- name: https
+  port: 443
+  external_port: 443
+  protocol: TCP
+config:
+  schema_version: 2
+  domain_name: example.com
+  generate_hostname: false
+  integrations:
+    homepage:
+      enabled: false
+    autodns:
+      enabled: false
+    traefik:
+      enabled: false
+secrets:
+  NB_PROXY_TOKEN: CHANGE_ME
+vars:
+  NB_PROXY_MANAGEMENT_ADDRESS: https://netbird.example.com
+  NB_PROXY_DOMAIN: example.com
+  NB_PROXY_CERTIFICATE_DIRECTORY: /certs
+  NB_PROXY_ALLOW_INSECURE: 'true'
+  NB_PROXY_ACME_CERTIFICATES: 'true'
+  NB_PROXY_LOG_LEVEL: info
+  NB_PROXY_PRIVATE: 'true'
+  NB_PROXY_ADDRESS: :443
+deployments:
+  docker_compose:
+    restart_policy: unless-stopped
+    host_base_path: /export/docker
+    volumes:
+    - proxy_certs:/certs
+    environment:
+      NB_PROXY_CERTIFICATE_DIRECTORY: '{{ vars.NB_PROXY_CERTIFICATE_DIRECTORY }}'
+      NB_PROXY_ALLOW_INSECURE: '{{ vars.NB_PROXY_ALLOW_INSECURE }}'
+      NB_PROXY_MANAGEMENT_ADDRESS: '{{ vars.NB_PROXY_MANAGEMENT_ADDRESS }}'
+      NB_PROXY_ACME_CERTIFICATES: '{{ vars.NB_PROXY_ACME_CERTIFICATES }}'
+      NB_PROXY_DOMAIN: '{{ vars.NB_PROXY_DOMAIN }}'
+      NB_PROXY_LOG_LEVEL: '{{ vars.NB_PROXY_LOG_LEVEL }}'
+      NB_PROXY_TOKEN: '{{ secrets.NB_PROXY_TOKEN }}'
+      NB_PROXY_PRIVATE: '{{ vars.NB_PROXY_PRIVATE }}'
+      NB_PROXY_ADDRESS: '{{ vars.NB_PROXY_ADDRESS }}'
+volumes:
+  proxy_certs:
+    description: ACME / proxy certificates (NB_PROXY_CERTIFICATE_DIRECTORY)
+deployment_strategy:
+  main:
+    enabled: true
+    target_stage: prod
+  dev:
+    enabled: true
+    target_stage: dev
+  test:
+    enabled: false
+    target_stage: test
+  ansible-dev:
+    enabled: true
+    target_stage: dev
+  iac-dev:
+    enabled: true
+    target_stage: dev
+  template-dev:
+    enabled: true
+    target_stage: dev
